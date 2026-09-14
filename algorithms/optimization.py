@@ -205,6 +205,53 @@ def genetic_algorithm(
       después de la reparación.
     - Conserve los mejores individuos por elitismo y registre en los historiales
       el mejor global de cada generación.
+      
+      Version Inicial:
+      
+      initial_population = problem.initial_population()
+          best_record = []
+          for j in range(generations):
+              elite_one = None
+              elite_two = None
+              new_population = []
+              best_record.append(problem.tournament_select())
+              for i in range(1, len(initial_population)):
+                  padre1 = problem.tournament_select()
+                  padre2 = problem.tournament_select()
+                  
+                  if not elite_two and not elite_one:
+                      elite_one = max(padre1, padre2)
+                      elite_two = min(padre1,padre2)
+      
+                  else:
+                      if padre1 > elite_one:
+                          elite_two = elite_one
+                          elite_one = padre1
+                      elif padre1 > elite_two:
+                          elite_two = padre1
+                          
+                      if padre2 > elite_one:
+                          elite_two = elite_one
+                          elite_one = padre2
+                      elif padre2 > elite_two:
+                          elite_two = padre2
+      
+                  hijo1, hijo2 = one_point_crossover(padre1, padre2, rng) #Tupla con 2 hijos
+                  hijo1 = problem.repair_configuration(hijo1, rng)
+                  hijo2 = problem.repair_configuration(hijo2, rng)
+                  
+                  hijo1 = swap_mutation(hijo1, mutation_probability)
+                  hijo2 = swap_mutation(hijo2, mutation_probability)
+                  new_population.append(hijo1)
+                  new_population.append(hijo2)
+                  
+              new_population.append(elite_one)
+              new_population.append(elite_two)
+              best_record.append(elite_one)
+              initial_population = new_population
+              
+          return max(best_record)
+      
     """
     rng = rng or random.Random()
     if population_size < 2:
@@ -217,49 +264,57 @@ def genetic_algorithm(
         raise ValueError("elite_size debe estar entre 0 y population_size")
     
     
-    initial_population = problem.initial_population()
-    best_record = []
-    for j in range(generations):
-        elite_one = None
-        elite_two = None
-        new_population = []
-        best_record.append(problem.tournament_select())
-        for i in range(1, len(initial_population)):
-            padre1 = problem.tournament_select()
-            padre2 = problem.tournament_select()
-            
-            if not elite_two and not elite_one:
-                elite_one = max(padre1, padre2)
-                elite_two = min(padre1,padre2)
+    # 1. Crear población inicial
+    population = problem.initial_population(population_size, rng)
 
-            else:
-                if padre1 > elite_one:
-                    elite_two = elite_one
-                    elite_one = padre1
-                elif padre1 > elite_two:
-                    elite_two = padre1
-                    
-                if padre2 > elite_one:
-                    elite_two = elite_one
-                    elite_one = padre2
-                elif padre2 > elite_two:
-                    elite_two = padre2
+    best_overall_individual = None
+    best_overall_score = float("-inf")
 
-            hijo1, hijo2 = one_point_crossover(padre1, padre2, rng) #Tupla con 2 hijos
+    for gen in range(generations):
+        # 2. Evaluar a toda la población (asumiendo que problem.evaluate() calcula fitness)
+        scores = [problem.evaluate(ind) for ind in population]
+
+        # Actualizar el mejor global
+        max_score = max(scores)
+        best_idx = scores.index(max_score)
+        if max_score > best_overall_score:
+            best_overall_score = max_score
+            best_overall_individual = population[best_idx]
+
+        # 3. Extraer las élites verdaderas (las mejores de toda la población)
+        # Ordena los índices por su score descendente
+        sorted_indices = sorted(
+            range(len(population)), key=lambda i: scores[i], reverse=True
+        )
+        elites = [population[i] for i in sorted_indices[:elite_size]]
+
+        # 4. Generar la nueva población
+        new_population = list(elites)
+
+        # Rellenar la población hasta alcanzar el population_size exacto
+        while len(new_population) < population_size:
+            padre1 = problem.tournament_select(population, scores, rng)
+            padre2 = problem.tournament_select(population, scores, rng)
+
+            hijo1, hijo2 = one_point_crossover(padre1, padre2, rng)
+
             hijo1 = problem.repair_configuration(hijo1, rng)
             hijo2 = problem.repair_configuration(hijo2, rng)
-            
-            hijo1 = swap_mutation(hijo1, mutation_probability)
-            hijo2 = swap_mutation(hijo2, mutation_probability)
+
+            hijo1 = swap_mutation(hijo1, mutation_probability, rng)
+            hijo2 = swap_mutation(hijo2, mutation_probability, rng)
+
             new_population.append(hijo1)
-            new_population.append(hijo2)
-            
-        new_population.append(elite_one)
-        new_population.append(elite_two)
-        best_record.append(elite_one)
-        initial_population = new_population
-        
-    return max(best_record)
+            # Evita sobrepasar el tamaño máximo si la población es impar
+            if len(new_population) < population_size:
+                new_population.append(hijo2)
+
+        # 5. Reemplazar la población vieja con la nueva
+        population = new_population
+
+    return best_overall_individual
+    
+    
         
     
     
