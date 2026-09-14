@@ -269,52 +269,61 @@ def genetic_algorithm(
 
     best_overall_individual = None
     best_overall_score = float("-inf")
+    history = []
 
     for gen in range(generations):
-        # 2. Evaluar a toda la población (asumiendo que problem.evaluate() calcula fitness)
-        scores = [problem.evaluate(ind) for ind in population]
+        # 2. Evaluar a toda la población mediante configuration_score
+        scores = [configuration_score(problem, ind) for ind in population]
 
-        # Actualizar el mejor global
+        # Registrar y actualizar el mejor global histórico
         max_score = max(scores)
         best_idx = scores.index(max_score)
         if max_score > best_overall_score:
             best_overall_score = max_score
             best_overall_individual = population[best_idx]
 
-        # 3. Extraer las élites verdaderas (las mejores de toda la población)
-        # Ordena los índices por su score descendente
+        history.append(best_overall_individual)
+
+        # 3. Preservar las élites (los mejores de la población actual)
         sorted_indices = sorted(
             range(len(population)), key=lambda i: scores[i], reverse=True
         )
         elites = [population[i] for i in sorted_indices[:elite_size]]
 
-        # 4. Generar la nueva población
+        # 4. Generar la nueva población manteniendo el tamaño
         new_population = list(elites)
 
-        # Rellenar la población hasta alcanzar el population_size exacto
         while len(new_population) < population_size:
             padre1 = problem.tournament_select(population, scores, rng)
             padre2 = problem.tournament_select(population, scores, rng)
 
+            # Cruce
             hijo1, hijo2 = one_point_crossover(padre1, padre2, rng)
 
+            # Reparación inicial post-cruce
             hijo1 = problem.repair_configuration(hijo1, rng)
             hijo2 = problem.repair_configuration(hijo2, rng)
 
+            # Mutación
             hijo1 = swap_mutation(hijo1, mutation_probability, rng)
             hijo2 = swap_mutation(hijo2, mutation_probability, rng)
 
+            # Reparación de seguridad post-mutación
+            hijo1 = problem.repair_configuration(hijo1, rng)
+            hijo2 = problem.repair_configuration(hijo2, rng)
+
             new_population.append(hijo1)
-            # Evita sobrepasar el tamaño máximo si la población es impar
             if len(new_population) < population_size:
                 new_population.append(hijo2)
 
-        # 5. Reemplazar la población vieja con la nueva
+        # 5. Reemplazo para la siguiente generación
         population = new_population
 
-    return best_overall_individual
-    
-    
+    return OptimizationResult(
+        best_configuration=best_overall_individual,
+        best_score=best_overall_score,
+        history=history,
+    )
         
     
     
