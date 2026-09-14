@@ -125,6 +125,37 @@ def swap_mutation(
     - Si alguno de los dos grupos está vacío, no hay un intercambio posible.
     - Retorne una tupla nueva; no modifique el individuo recibido.
     """
+    bits_activos = []
+    bits_inactivos = []
+
+    for i in range(len(individual)) :
+        if (rng.random<mutation_probability):
+            bits_activos.append (i)
+        else:
+            bits_inactivos.append (i)
+    if (len(bits_inactivos) == 0 or len(bits_activos) == 0 ):
+        return individual
+    else:
+
+        mayor_swap_es_ultimo = False
+        i_activo = rng.choice(bits_activos)
+        i_inactivo =  rng.choice(bits_inactivos)
+
+        if (i_activo > i_inactivo):
+            mayor_swap = i_activo
+            menor_swap = i_inactivo
+        else:
+            mayor_swap = i_inactivo
+            menor_swap = i_activo
+        if (mayor_swap == len(individual)-1):
+            mayor_swap_es_ultimo = True
+        if (mayor_swap_es_ultimo == True):
+            return  individual[:menor_swap] + individual[mayor_swap] + individual[menor_swap+1: mayor_swap] + individual[menor_swap]
+        else:
+            return individual[:menor_swap] + individual[mayor_swap] + individual[menor_swap+1:mayor_swap] + individual[menor_swap] + individual[mayor_swap+1:]
+
+
+    
     # TODO: Add your code here
     raise NotImplementedError("Punto 3: implemente swap_mutation")
 
