@@ -124,40 +124,63 @@ def swap_mutation(
       de cada grupo con rng.choice(...).
     - Si alguno de los dos grupos está vacío, no hay un intercambio posible.
     - Retorne una tupla nueva; no modifique el individuo recibido.
-    """
+
+    Primera Version: 
+
     bits_activos = []
-    bits_inactivos = []
-
-    for i in range(len(individual)) :
-        if (rng.random<mutation_probability):
-            bits_activos.append (i)
-        else:
-            bits_inactivos.append (i)
-    if (len(bits_inactivos) == 0 or len(bits_activos) == 0 ):
-        return individual
-    else:
-
-        mayor_swap_es_ultimo = False
-        i_activo = rng.choice(bits_activos)
-        i_inactivo =  rng.choice(bits_inactivos)
-
-        if (i_activo > i_inactivo):
-            mayor_swap = i_activo
-            menor_swap = i_inactivo
-        else:
-            mayor_swap = i_inactivo
-            menor_swap = i_activo
-        if (mayor_swap == len(individual)-1):
-            mayor_swap_es_ultimo = True
-        if (mayor_swap_es_ultimo == True):
-            return  individual[:menor_swap] + individual[mayor_swap] + individual[menor_swap+1: mayor_swap] + individual[menor_swap]
-        else:
-            return individual[:menor_swap] + individual[mayor_swap] + individual[menor_swap+1:mayor_swap] + individual[menor_swap] + individual[mayor_swap+1:]
-
-
+        bits_inactivos = []
     
-    # TODO: Add your code here
-    raise NotImplementedError("Punto 3: implemente swap_mutation")
+        for i in range(len(individual)) :
+            if (rng.random<mutation_probability):
+                bits_activos.append (i)
+            else:
+                bits_inactivos.append (i)
+        if (len(bits_inactivos) == 0 or len(bits_activos) == 0 ):
+            return individual
+        else:
+    
+            mayor_swap_es_ultimo = False
+            i_activo = rng.choice(bits_activos)
+            i_inactivo =  rng.choice(bits_inactivos)
+    
+            if (i_activo > i_inactivo):
+                mayor_swap = i_activo
+                menor_swap = i_inactivo
+            else:
+                mayor_swap = i_inactivo
+                menor_swap = i_activo
+            if (mayor_swap == len(individual)-1):
+                mayor_swap_es_ultimo = True
+            if (mayor_swap_es_ultimo == True):
+                return  individual[:menor_swap] + individual[mayor_swap] + individual[menor_swap+1: mayor_swap] + individual[menor_swap]
+            else:
+                return individual[:menor_swap] + individual[mayor_swap] + individual[menor_swap+1:mayor_swap] + individual[menor_swap] + individual[mayor_swap+1:]
+    
+    La version actual fue corregida con IAG.
+    La IAG me explico que la evaluacion probabilistica sobre si sucede o no la mutacion se realiza una vez y no bit por bit. 
+    Ademas, me ayudo a simplificar la logica detras del slicing para retornar el individuo mutado.
+    
+    """
+
+    if rng.random() >= mutation_probability:
+        return individual
+
+    bits_activos = [i for i, val in enumerate(individual) if val]
+    bits_inactivos = [i for i, val in enumerate(individual) if not val]
+
+    if not bits_activos or not bits_inactivos:
+        return individual
+
+    i_activo = rng.choice(bits_activos)
+    i_inactivo = rng.choice(bits_inactivos)
+
+    mutated = list(individual)
+    
+    #SWAP
+    mutated[i_activo], mutated[i_inactivo] = mutated[i_inactivo], mutated[i_activo]
+
+    return tuple(mutated)
+
 
 
 def genetic_algorithm(
