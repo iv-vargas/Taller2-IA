@@ -215,6 +215,54 @@ def genetic_algorithm(
         raise ValueError("La probabilidad de mutación debe estar entre 0 y 1")
     if not 0 <= elite_size <= population_size:
         raise ValueError("elite_size debe estar entre 0 y population_size")
+    
+    
+    initial_population = problem.initial_population()
+    best_record = []
+    for j in range(generations):
+        elite_one = None
+        elite_two = None
+        new_population = []
+        best_record.append(problem.tournament_select())
+        for i in range(1, len(initial_population)):
+            padre1 = problem.tournament_select()
+            padre2 = problem.tournament_select()
+            
+            if not elite_two and not elite_one:
+                elite_one = max(padre1, padre2)
+                elite_two = min(padre1,padre2)
 
-    # TODO: Add your code here
-    raise NotImplementedError("Punto 3: implemente genetic_algorithm")
+            else:
+                if padre1 > elite_one:
+                    elite_two = elite_one
+                    elite_one = padre1
+                elif padre1 > elite_two:
+                    elite_two = padre1
+                    
+                if padre2 > elite_one:
+                    elite_two = elite_one
+                    elite_one = padre2
+                elif padre2 > elite_two:
+                    elite_two = padre2
+
+            hijo1, hijo2 = one_point_crossover(padre1, padre2, rng) #Tupla con 2 hijos
+            hijo1 = problem.repair_configuration(hijo1, rng)
+            hijo2 = problem.repair_configuration(hijo2, rng)
+            
+            hijo1 = swap_mutation(hijo1, mutation_probability)
+            hijo2 = swap_mutation(hijo2, mutation_probability)
+            new_population.append(hijo1)
+            new_population.append(hijo2)
+            
+        new_population.append(elite_one)
+        new_population.append(elite_two)
+        best_record.append(elite_one)
+        initial_population = new_population
+        
+    return max(best_record)
+        
+    
+    
+
+    
+
