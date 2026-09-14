@@ -40,8 +40,45 @@ class MinimaxAgent(MultiAgentSearchAgent):
         - Reinicie las métricas y cuente una vez cada estado procesado, incluida
           la raíz. Retorne la acción de MAX y conserve la primera en los empates.
         """
-        # TODO: Add your code here
-        raise NotImplementedError("Punto 4: implemente MinimaxAgent.get_action")
+        
+        self.nodes_evaluated = 0
+        valor, movimiento = self.valor_max(state, self.depth)
+        return movimiento
+        
+    def valor_max(self, state: GameState, depth) -> tuple:
+      
+      self.nodes_evaluated += 1
+      agent_index = 0
+      
+      if state.is_win() or state.is_lose() or depth == 0:
+        return evaluation_function(state), None
+      
+      valor = float('-inf')
+      for action in state.get_legal_actions(agent_index):
+        sucessor = state.generate_successor(agent_index, action)
+        valor2, action2 = self.valor_min(sucessor, depth-1)
+        if valor2 > valor:
+          valor, movimiento = valor2, action
+      
+      return valor, movimiento
+    
+    def valor_min(self, state: GameState, depth) -> tuple:
+      
+      self.nodes_evaluated += 1
+      agent_index = 1
+      
+      if state.is_win() or state.is_lose() or depth == 0:
+        return evaluation_function(state), None
+      
+      valor = float('inf')
+      for action in state.get_legal_actions(agent_index):
+        sucessor = state.generate_successor(agent_index, action)
+        valor2, action2 = self.valor_max(sucessor, depth-1)
+        if valor2 < valor:
+          valor, movimiento = valor2, action
+      
+      return valor, movimiento
+          
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
