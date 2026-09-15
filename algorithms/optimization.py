@@ -16,7 +16,10 @@ def configuration_score(
       redundancia y exposición en ese orden.
     """
     # TODO: Add your code here
-    raise NotImplementedError("Punto 1: implemente configuration_score")
+    
+    cobertura, redundancia, exposicion = problem.score_components(configuration)
+    return cobertura - redundancia - exposicion
+    # raise NotImplementedError("Punto 1: implemente configuration_score")
 
 
 def hill_climbing(
@@ -39,7 +42,92 @@ def hill_climbing(
       mejoras aceptadas antes de retornar el OptimizationResult.
     """
     # TODO: Add your code here
-    raise NotImplementedError("Punto 1: implemente hill_climbing")
+    """
+    Version Inicial: 
+    
+    inicial = initial_configuration
+    actual = inicial
+    iteracion_actual = 0
+    while iteracion_actual < max_iterations:
+        vecinos = problem.neighbors(actual)
+        vecino_elegido = vecinos[0]
+        record = configuration_score(problem, vecinos[0])
+        for vecino in vecinos:
+            puntuacion_vecino = configuration_score(problem, vecino)
+            if puntuacion_vecino > record:
+                vecino_elegido = vecino
+                record = puntuacion_vecino
+        
+        if configuration_score(problem, vecino) <= configuration_score(problem, actual):
+            return actual
+        actual = vecino_elegido
+        iteracion_actual += 1
+    return actual 
+    
+    El problema que tenía al momento de realizar esta implementación es que no sabía como retornar precisamente la respuesta como un OptimizationResult, por lo que estaba
+    retornando solo la configuración respuesta pero esto no era suficiente para satisfacer el retorno esperado.
+    
+    Para este caso, el prompt utilizado en la IA ChatGPT Sonnet 5 fue "Mi función tiene que retornar un tipo de clase OptimizationResult, cómo puedo lograr esto?", junto con
+    una imagen de la versión inicial y una imagen del código de OptimizationResult.
+    
+    La IA me realizó las siguientes correcciones: 
+    - Retornar un OptimizationResult invocandolo como OptimizationResult(best_configuration, best_score, ...) dandole como argumentos los valores calculados en el algoritmo.
+    - Guardar el historial de configuraciones y de puntuaciones, luego añadirlo al OptimizationResult al momento del return.
+    - No estaba considerando las evaluaciones. Estas debían de considerarse al invocar configuration_score()
+    - Debo de tener en cuenta la primera evaluación del nodo inicial y puedo ahorrarme una iteración si empiezo desde el segundo vecino en lugar de comparar el primero consigo mismo.
+    
+    """
+    
+    inicial = initial_configuration
+    actual = inicial
+    evaluaciones = 0
+    
+    puntaje_actual = configuration_score(problem, actual)
+    evaluaciones += 1
+    
+    historial_conf = [actual]
+    historial_punt = [puntaje_actual]
+    
+    iteracion_actual = 0
+    while iteracion_actual < max_iterations:
+        vecinos = problem.neighbors(actual)
+        
+        vecino_elegido = vecinos[0]
+        record = configuration_score(problem, vecinos[0])
+        evaluaciones += 1
+        
+        for vecino in vecinos[1:]:
+            puntuacion_vecino = configuration_score(problem, vecino)
+            evaluaciones += 1
+            if puntuacion_vecino > record:
+                vecino_elegido = vecino
+                record = puntuacion_vecino
+                
+        if record <= puntaje_actual:
+            return OptimizationResult(
+                best_configuration = actual,
+                best_score = puntaje_actual,
+                evaluations = evaluaciones,
+                iterations = iteracion_actual,
+                history = historial_conf,
+                score_history = historial_punt
+            )
+        
+        actual = vecino_elegido
+        puntaje_actual = record
+        historial_conf.append(actual)
+        historial_punt.append(puntaje_actual)
+        iteracion_actual += 1
+        
+    return OptimizationResult(
+        best_configuration = actual,
+        best_score = puntaje_actual,
+        evaluations = evaluaciones,
+        iterations = iteracion_actual,
+        history = historial_conf,
+        score_history = historial_punt
+    )
+    # raise NotImplementedError("Punto 1: implemente hill_climbing")
 
 
 def cooling_schedule(initial_temperature: float, cooling_rate: float, iteration: int) -> float:
@@ -49,7 +137,7 @@ def cooling_schedule(initial_temperature: float, cooling_rate: float, iteration:
     Esta función se invoca desde simulated_annealing en cada iteración.
     """
     # TODO: Add your code here
-    raise NotImplementedError("Punto 2: implemente cooling_schedule")
+    # raise NotImplementedError("Punto 2: implemente cooling_schedule")
 
 
 def simulated_annealing(
