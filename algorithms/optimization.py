@@ -339,6 +339,26 @@ def genetic_algorithm(
               initial_population = new_population
               
           return max(best_record)
+          
+          
+    Correcciones con IA:
+    
+    Los principales problemas que tenia en mi concepcion inicial fueron:
+    1. ¿Como implementar elitismo?
+    2. ¿Como determino la aptitud de un individuo?
+    3. ¿Como mantengo la el numero de la poblacion entre genaraciones?
+    4. ¿Que debo retornar?
+    
+    Al brindarle a la IAG diferentes partes del proyecto esta corrigio mi aproximacion frente al algoritmo genetico y me permitio entender mejor como funciona el algoritmo
+    
+    Por ejemplo algunas correcciones realizadas por la IAG fueron: 
+    1. Utilizar la funcion configuration_score para determinar la utilidad de un individuo.
+    2. Mantener un historial y numero de evaluaciones para cumplir con el formato de retorno.
+    3. Añadir en primer lugar a los elites en la nueva generacion y posteriormente generar hijos iterativamente hasta alcanzar
+    el tope de la genaracion.
+    4. Satisfacer el formato de retorno del algoritmo.
+    
+    Considero que lo mas importante de haber iterado con IA fue comprender como se realizaba el proceso de trancision entre generaciones.
       
     """
     rng = rng or random.Random()
@@ -352,18 +372,30 @@ def genetic_algorithm(
         raise ValueError("elite_size debe estar entre 0 y population_size")
     
     
-    # 1. Crear población inicial
+    rng = rng or random.Random()
+    if population_size < 2:
+        raise ValueError("La población debe tener al menos dos individuos")
+    if generations < 0:
+        raise ValueError("El número de generaciones no puede ser negativo")
+    if not 0.0 <= mutation_probability <= 1.0:
+        raise ValueError("La probabilidad de mutación debe estar entre 0 y 1")
+    if not 0 <= elite_size <= population_size:
+        raise ValueError("elite_size debe estar entre 0 y population_size")
+    
+    
     population = problem.initial_population(population_size, rng)
 
     best_overall_individual = None
     best_overall_score = float("-inf")
     history = []
+    score_history = []
+    evaluaciones = 0
+    generaciones_ejecutadas = 0
 
     for gen in range(generations):
-        # 2. Evaluar a toda la población mediante configuration_score
         scores = [configuration_score(problem, ind) for ind in population]
+        evaluaciones += len(population)
 
-        # Registrar y actualizar el mejor global histórico
         max_score = max(scores)
         best_idx = scores.index(max_score)
         if max_score > best_overall_score:
@@ -371,46 +403,41 @@ def genetic_algorithm(
             best_overall_individual = population[best_idx]
 
         history.append(best_overall_individual)
+        score_history.append(best_overall_score)
+        generaciones_ejecutadas += 1
 
-        # 3. Preservar las élites (los mejores de la población actual)
         sorted_indices = sorted(
             range(len(population)), key=lambda i: scores[i], reverse=True
         )
         elites = [population[i] for i in sorted_indices[:elite_size]]
 
-        # 4. Generar la nueva población manteniendo el tamaño
         new_population = list(elites)
 
         while len(new_population) < population_size:
             padre1 = problem.tournament_select(population, scores, rng)
             padre2 = problem.tournament_select(population, scores, rng)
 
-            # Cruce
             hijo1, hijo2 = one_point_crossover(padre1, padre2, rng)
 
-            # Reparación inicial post-cruce
             hijo1 = problem.repair_configuration(hijo1, rng)
             hijo2 = problem.repair_configuration(hijo2, rng)
 
-            # Mutación
             hijo1 = swap_mutation(hijo1, mutation_probability, rng)
             hijo2 = swap_mutation(hijo2, mutation_probability, rng)
-
-            # Reparación de seguridad post-mutación
-            hijo1 = problem.repair_configuration(hijo1, rng)
-            hijo2 = problem.repair_configuration(hijo2, rng)
 
             new_population.append(hijo1)
             if len(new_population) < population_size:
                 new_population.append(hijo2)
 
-        # 5. Reemplazo para la siguiente generación
         population = new_population
 
     return OptimizationResult(
         best_configuration=best_overall_individual,
         best_score=best_overall_score,
+        evaluations=evaluaciones,
+        iterations=generaciones_ejecutadas,
         history=history,
+        score_history=score_history,
     )
         
     
