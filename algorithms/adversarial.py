@@ -44,7 +44,96 @@ class MinimaxAgent(MultiAgentSearchAgent):
         self.nodes_evaluated = 0
         valor, movimiento = self.valor_max(state, self.depth)
         return movimiento
+    
+    """
+    1. Versión inicial propia:
+    
+    def valor_max(self, state: GameState) -> tuple:
+          
+          self.nodes_evaluated += 1
+          agent_index = (self.nodes_evaluated + 1) % state.get_num_agents()
+          
+          if state.is_win() or state.is_lose() or depth == 0:
+            return evaluation_function(state), None
+          
+          valor = None
+          for action in state.get_legal_actions(agent_index):
+            sucessor = state.generate_successor(agent_index, action)
+            valor2, action2 = self.valor_min(sucessor)
+            if valor2 > valor:
+              valor, movimiento = valor2, action
+          
+          return valor, movimiento
         
+    def valor_min(self, state: GameState) -> tuple:
+      
+      self.nodes_evaluated += 1
+      agent_index = (self.nodes_evaluated + 1) % state.get_num_agents()
+      
+      if state.is_win() or state.is_lose() or depth == 0:
+        return evaluation_function(state), None
+      
+      valor = None
+      for action in state.get_legal_actions(agent_index):
+        sucessor = state.generate_successor(agent_index, action)
+        valor2, action2 = self.valor_max(sucessor)
+        if valor2 < valor:
+          valor, movimiento = valor2, action
+      
+      return valor, movimiento
+    
+    Para esta implementación inicial se tomó como base el pseudocodigo proporcionado en las diapositivas
+    de clase. Sin embargo, al ejecutarlo se arrojaba un error en el que se intentaba realizar acciones ilegales
+    para el agente en turno. Tras revisar con ayuda de la IA se descubrió que la línea que creaba agent_index
+    arrojaba valores casi de forma aleatoria, lo que hacía que en algún punto se accedieran a las acciones 
+    legales del otro agente, y al intentarlas ejecutar sobre el agente en turno, estas correspondian a acciones
+    ilegales.
+    
+    2. Versión correjida:
+    
+    def valor_max(self, state: GameState) -> tuple:
+      
+      self.nodes_evaluated += 1
+      agent_index = 0
+      
+      if state.is_win() or state.is_lose() or depth == 0:
+        return evaluation_function(state), None
+      
+      valor = float('-inf')
+      for action in state.get_legal_actions(agent_index):
+        sucessor = state.generate_successor(agent_index, action)
+        valor2, action2 = self.valor_min(sucessor)
+        if valor2 > valor:
+          valor, movimiento = valor2, action
+      
+      return valor, movimiento
+        
+    def valor_min(self, state: GameState) -> tuple:
+      
+      self.nodes_evaluated += 1
+      agent_index = 1
+      
+      if state.is_win() or state.is_lose() or depth == 0:
+        return evaluation_function(state), None
+      
+      valor = float('inf')
+      for action in state.get_legal_actions(agent_index):
+        sucessor = state.generate_successor(agent_index, action)
+        valor2, action2 = self.valor_max(sucessor)
+        if valor2 < valor:
+          valor, movimiento = valor2, action
+      
+      return valor, movimiento
+    
+    Después de revisar el código con ayuda de la IA se modificaron 2 fragmentos importantes. El primero
+    corresponde a la asignación de agent_index, en donde se determinó que debían ser los valores fijos que
+    representan a cada agente (0 para el defensor y 1 para el intruso). El segundo cambio fue sobre la 
+    cantidad inicial que toma la variable valor, y a partir de la cual se compara para buscar el mejor estado,
+    teniendo como recomendación de la IA que estos valores fueran -inf en el caso de MAX y +inf en el caso de MIN.
+    """
+    # Version Final: 
+    # Se le agrega el parámetro depth (profundidad) ya que no se estaba manejando correctamente el caso de 
+    # empate al no disminuir la profundidad con cada iteración.
     def valor_max(self, state: GameState, depth) -> tuple:
       
       self.nodes_evaluated += 1
@@ -78,8 +167,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
           valor, movimiento = valor2, action
       
       return valor, movimiento
-          
-
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """Agente Minimax que evita explorar ramas mediante poda alfa-beta."""
