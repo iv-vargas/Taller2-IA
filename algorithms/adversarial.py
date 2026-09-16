@@ -43,7 +43,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
         # TODO: Add your code here
         raise NotImplementedError("Punto 4: implemente MinimaxAgent.get_action")
 
-
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """Agente Minimax que evita explorar ramas mediante poda alfa-beta."""
 
@@ -60,6 +59,102 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           llamadas recursivas.
         - En MAX actualice alpha y corte si valor >= beta; en MIN actualice beta
           y corte si valor <= alpha.
+          
+        Codigo realizado antes de la ayuda de la IA:
+        
+        La idea es tener una función mascara que inicia la recursión desde ValorMax, alfa inicia en -infinito y beta en infinito.
+        
+        Desde valor max se revisa si el estado actual es terminal, en caso de serlo sencillamente se genera la evaluación de utilidad del nodo y este valor
+        se propaga hacia arriba en el arbol posteriormente.
+        En caso de no ser un estado terminal, se inicia valor = -infinito y movimiento a retornar = None.
+        para cada una de las acciones posibles desde el estado actual y el agente MAX se genera el sucesor de esa accion. (resultado de tomar cierto arco hacia un hijo)
+        cada sucesor se expande, al estar jugando a turnos es momento de que MIN expanda. obtenemos un nuevo valor. En caso de que este v2 sea mayor que el valor que teniamos, 
+        el movimiento optimo hasta el momento es la acción que condujo a ese valor. Al estar en un nodo max alfa pasa a ser max(alfa,valor), pero si valor es mayor que beta podemos
+        generar una poda y retornar prematuramente el valor y el movimiento optimo.
+        
+        Esta logica se sigue a la inversa en MIN. 
+        
+        self.nodes_evaluated = 0
+                
+                AlfaBeta(self,state)
+                
+                def AlfaBeta(self,state):
+                  
+                  valor,movimiento = ValorMax(state,self.depth,float("-inf"),float("inf"))
+                  return movimiento
+                
+                
+                def ValorMax(estado,profundidad,alfa,beta):
+                  self.nodes_evaluated +=1
+                  if estado.is_win() or estado.is_lose():
+                    return evaluation_function(estado),None
+                  valor = float("-inf")
+                  movimiento = None
+                  for a in estado.get_legal_actions(0):
+                    sucesor = estado.generate_successor(0,a)
+                    v2,_ = ValorMin(sucesor,profundidad-1,alfa,beta)
+                    if v2 > valor:
+                      valor = v2
+                      movimiento = a
+                    alfa = max(alfa,valor)
+                    if valor>=beta:
+                      return valor,movimiento
+                  
+                  def ValorMin(estado,profundidad,alfa,beta):
+                    if estado.is_win() or estado.is_lose():
+                      return evaluation_function(estado),None
+                    valor = float("inf")
+                    movimiento = None
+                    for a in estado.get_legal_actions(1):
+                      sucesor = estado.generate_successors(1,a)
+                      v2,_ = ValorMax(sucesor,profundidad-1,alfa,beta)
+                      if v2<valor:
+                        valor = v2
+                        movimiento = a
+                      beta = min(beta,valor)
+                      if valor <=alfa:
+                        return valor,movimiento
+                    return valor,movimiento
         """
-        # TODO: Add your code here
-        raise NotImplementedError("Punto 5: implemente AlphaBetaAgent.get_action")
+        self.nodes_evaluated = 0
+        
+        def ValorMax(estado,profundidad,alfa,beta):
+          self.nodes_evaluated +=1
+          if estado.is_win() or estado.is_lose() or profundidad == 0: #con ayuda de la ia notamos que otra posibilidad para estado terminal es que alcancemos la profundidad maxima
+            return evaluation_function(estado),None
+          valor = float("-inf")
+          movimiento = None
+          for a in estado.get_legal_actions(0):
+            sucesor = estado.generate_successor(0,a)
+            v2,_ = ValorMin(sucesor,profundidad-1,alfa,beta)
+            if v2 > valor:
+              valor = v2
+              movimiento = a
+            alfa = max(alfa,valor)
+            if valor>=beta:
+              return valor,movimiento
+            
+          def ValorMin(estado,profundidad,alfa,beta):
+            if estado.is_win() or estado.is_lose() or profundidad == 0: #con ayuda de la ia notamos que otra posibilidad para estado terminal es que alcancemos la profundidad maxima
+              return evaluation_function(estado),None
+            valor = float("inf")
+            movimiento = None
+            for a in estado.get_legal_actions(1):
+              sucesor = estado.generate_successors(1,a)
+              v2,_ = ValorMax(sucesor,profundidad-1,alfa,beta)
+              if v2<valor:
+                valor = v2
+                movimiento = a
+              beta = min(beta,valor)
+              if valor <=alfa:
+                return valor,movimiento
+            return valor,movimiento
+            
+          
+          valor,movimiento = ValorMax(state,self.depth,float("-inf"),float("inf")) #Con ayuda de la ia notamos que no es necesario encapsular la función de arranque
+          return movimiento #pues get_action ya actua como esta. Pasamos el codigo al final para evitar error "structurally unreachable"
+            
+
+
+
+        
