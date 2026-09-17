@@ -106,7 +106,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                     valor = float("inf")
                     movimiento = None
                     for a in estado.get_legal_actions(1):
-                      sucesor = estado.generate_successors(1,a)
+                      sucesor = estado.generate_successor(1,a)
                       v2,_ = ValorMax(sucesor,profundidad-1,alfa,beta)
                       if v2<valor:
                         valor = v2
@@ -133,26 +133,27 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             alfa = max(alfa,valor)
             if valor>=beta:
               return valor,movimiento
+          return valor,movimiento
             
-          def ValorMin(estado,profundidad,alfa,beta):
-            if estado.is_win() or estado.is_lose() or profundidad == 0: #con ayuda de la ia notamos que otra posibilidad para estado terminal es que alcancemos la profundidad maxima
-              return evaluation_function(estado),None
-            valor = float("inf")
-            movimiento = None
-            for a in estado.get_legal_actions(1):
-              sucesor = estado.generate_successors(1,a)
-              v2,_ = ValorMax(sucesor,profundidad-1,alfa,beta)
-              if v2<valor:
-                valor = v2
-                movimiento = a
-              beta = min(beta,valor)
-              if valor <=alfa:
-                return valor,movimiento
-            return valor,movimiento
+        def ValorMin(estado,profundidad,alfa,beta):
+          if estado.is_win() or estado.is_lose() or profundidad == 0: #con ayuda de la ia notamos que otra posibilidad para estado terminal es que alcancemos la profundidad maxima
+            return evaluation_function(estado),None
+          valor = float("inf")
+          movimiento = None
+          for a in estado.get_legal_actions(1):
+            sucesor = estado.generate_successor(1,a)
+            v2,_ = ValorMax(sucesor,profundidad-1,alfa,beta)
+            if v2<valor:
+              valor = v2
+              movimiento = a
+            beta = min(beta,valor)
+            if valor <=alfa:
+              return valor,movimiento
+          return valor,movimiento
             
           
-          valor,movimiento = ValorMax(state,self.depth,float("-inf"),float("inf")) #Con ayuda de la ia notamos que no es necesario encapsular la función de arranque
-          return movimiento #pues get_action ya actua como esta. Pasamos el codigo al final para evitar error "structurally unreachable"
+        valor,movimiento = ValorMax(state,self.depth,float("-inf"),float("inf")) #Con ayuda de la ia notamos que no es necesario encapsular la función de arranque
+        return movimiento #pues get_action ya actua como esta. Pasamos el codigo al final para evitar error "structurally unreachable"
             
 
 
