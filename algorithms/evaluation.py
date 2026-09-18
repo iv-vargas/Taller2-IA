@@ -95,7 +95,7 @@ def evaluation_function(state: GameState) -> float:
         seguridad = valor_intruso #Se hace un check para evitar que las distancias sean infinitas y dañen la utilidad.
       valor_terminal = 0.0
       if masCercano!= float("inf"):
-        valor_terminal = 100.0/1.0+masCercano
+        valor_terminal = 100.0/(1.0+masCercano)
       
       valor_pendientes = 10.0*len(state.pending_terminals)
       
